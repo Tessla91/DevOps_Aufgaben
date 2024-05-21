@@ -21,7 +21,7 @@ Open the [integrated terminal](https://code.visualstudio.com/docs/editor/integra
 1. run the setup script: `./setup.sh` or `sh setup.sh`
 2. activate the python environment: `source .venv/bin/activate`
 3. run example code: `python src/hello.py`
-4. install new dependency: `pip install sklearn`
+4. install new dependency: `pip install -U scikit-learn`
 5. save current installed dependencies back to requirements.txt: `pip freeze > requirements.txt`
 
 ### Windows Users
