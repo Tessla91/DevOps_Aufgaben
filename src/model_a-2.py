@@ -20,6 +20,9 @@ from mpl_toolkits.mplot3d import Axes3D
 #from shap import Explainer
 #from shap.plots import beeswarm
 
+# ignore warning messages
+import warnings
+warnings.filterwarnings("ignore")
 # fetch dataset
 m_shroom = fetch_ucirepo(id=73)
 
