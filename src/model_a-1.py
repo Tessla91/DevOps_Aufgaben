@@ -16,7 +16,11 @@ from ucimlrepo import fetch_ucirepo
 import math
 import tqdm
 from mpl_toolkits.mplot3d import Axes3D
-import shap
+#import shap
+
+# ignore warning messages
+import warnings
+warnings.filterwarnings("ignore")
 
 # fetch dataset
 m_shroom = fetch_ucirepo(id=73)
