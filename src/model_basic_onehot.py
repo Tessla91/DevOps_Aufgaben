@@ -63,6 +63,11 @@ y_test.rename(columns={"poisonous": "target"}, inplace=True)
 y_train['target'] = y_train['target'].map({'p': 1, 'e': 0})
 y_test['target'] = y_test['target'].map({'p': 1, 'e': 0})
 
+# dropping "veil-type"
+to_drop = ["veil-type"]
+x_train.drop(to_drop, axis=1, inplace=True)
+x_test.drop(to_drop, axis=1, inplace=True)
+
 # Encoding of x-values
 encoder = OneHotEncoder(drop="first")
 encoder.fit(x_train)
@@ -74,27 +79,6 @@ x_encoded2 = encoder.transform(x_test)
 x_test = pd.DataFrame(x_encoded2.todense(),columns=encoder.get_feature_names_out())
 
 # Normalizing x- and y-values: not necessary
-
-# Multicollinearity
-
-# Reset indices of x_train and y_train
-x_train.reset_index(drop=True, inplace=True)
-y_train.reset_index(drop=True, inplace=True)
-
-# Concatenate x_train and y_train into mushroom_train DataFrame
-mushroom_train = pd.concat([x_train, y_train], axis=1)
-
-corr_matrix = mushroom_train.corr().abs()
-corr_matrix
-
-# Filter out correlations where both features are the same (correlation equals 1)
-mask = np.eye(len(corr_matrix), dtype=bool)
-filtered_corr = corr_matrix.mask(mask)
-
-# Find correlations greater than or equal to 0.5
-high_corr = filtered_corr[filtered_corr >= 0.5].stack().reset_index()
-
-high_corr.head (20)
 
 # Building a Model: KNeirestneighbors
 knn = KNeighborsClassifier(n_neighbors=5)
@@ -135,7 +119,7 @@ print("precision for knn: {}".format(tp/(tp + fp)))
 print("recall for knn: {}".format(tp/(tp + fn)))
 
 # Building a Model: Decision Tree
-dtc = DecisionTreeClassifier(max_depth=4, min_samples_split=50, class_weight = "balanced", random_state=1)
+dtc = DecisionTreeClassifier(splitter="best", min_samples_split=8, min_samples_leaf=2, max_features=None, max_depth=9, criterion="entropy", class_weight = "balanced")
 dtc.fit(x_train, y_train)
 
 fig = plt.figure(figsize=(15,15))
@@ -172,7 +156,6 @@ shap.summary_plot(shap_values_dtc, x_train, plot_type="bar")
 plt.show()
 
 # calculate accuracy, precision and recall for dtc
-
 predict_dtc = dtc.predict(x_test)
 
 cm = confusion_matrix(predict_dtc, y_test)
@@ -183,7 +166,7 @@ print("precision for Decision Tree: {}".format(tp/(tp + fp)))
 print("recall for Decision Tree: {}".format(tp/(tp + fn)))
 
 # Building a model: Logistic Regression
-logreg = LogisticRegression()
+logreg = LogisticRegression(solver='lbfgs', penalty='l2', max_iter=200, C=1526.418)
 logreg.fit(x_train, y_train)
 
 # Analyzing SHAP-value
@@ -222,7 +205,7 @@ print("precision for Logistic Regression: {}".format(tp/(tp + fp)))
 print("recall for Logistic Regression: {}".format(tp/(tp + fn)))
 
 # Building a model: Support Vector Machine
-svm = SVC(probability=True)
+svm = SVC(probability=True, kernel='rbf', gamma=0.0048, degree=5, coef0=3, class_weight=None, C=10000.0)
 svm.fit(x_train, y_train)
 
 # SHAP
@@ -256,11 +239,11 @@ predict_svm = svm.predict(x_test)
 cm = confusion_matrix(predict_svm, y_test)
 _, fp, fn, tp = cm.ravel()
 print("accuracy of support vector machine: {}".format(accuracy_score(predict_svm, y_test)))
-print("precision of support vectir machine: {}".format(tp/(tp + fp)))
+print("precision of support vector machine: {}".format(tp/(tp + fp)))
 print("recall of support vector machine: {}".format(tp/(tp + fn)))
 
 # Building a Model: Random Forest
-random = RandomForestClassifier (criterion="entropy", max_depth=4, min_samples_split=50, random_state=1)
+random = RandomForestClassifier (n_estimators=100, min_samples_split=8, min_samples_leaf=8, max_features='sqrt', max_depth=10, criterion='gini', class_weight='balanced_subsample', bootstrap=False)
 random.fit(x_train, y_train)
 
 # calculate feature importance with SHAP
@@ -305,7 +288,7 @@ print("precision of random forest: {}".format(tp/(tp + fp)))
 print("recall of random forest: {}".format(tp/(tp + fn)))
 
 # Build a Model: XGBoost
-bst = XGBClassifier(subsample=0.6, reg_lambda=0, reg_alpha=0, n_estimators=100, min_child_weight=1, max_depth=6, learning_rate=0.1, gamma=0.1, colsample_bytree=0.6, objective='binary:logistic')
+bst = XGBClassifier(subsample=1.0, reg_lambda=0.1, reg_alpha=0.5, n_estimators=100, min_child_weight=3, max_depth=8, learning_rate=0.05, gamma=0.1, colsample_bytree=0.7)
 bst.fit(x_train, y_train)
 
 # Analyzing SHAP-value
@@ -347,7 +330,7 @@ print("precision of XG Boost: {}".format(tp/(tp + fp)))
 print("recall of XG Boost: {}".format(tp/(tp + fn)))
 
 # Building a Model: Bagging-Ensemble
-ensemble = VotingClassifier([("knn",KNeighborsClassifier()),("logreg",LogisticRegression()),("random",RandomForestClassifier(criterion="entropy", max_depth=5, min_samples_split=5, random_state=1))], voting='soft')
+ensemble = VotingClassifier([("knn",KNeighborsClassifier(n_neighbors=5)),("logreg",LogisticRegression(solver='lbfgs', penalty='l2', max_iter=500, C=1526.418)),("random",RandomForestClassifier(n_estimators=100, min_samples_split=8, min_samples_leaf=8, max_features='sqrt', max_depth=10, criterion='gini', class_weight='balanced_subsample', bootstrap=False))], voting='soft')
 ensemble.fit(x_train,y_train)
 
 # Analyzing SHAP-value
