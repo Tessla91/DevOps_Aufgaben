@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 from sklearn import tree, metrics
 from sklearn.tree import DecisionTreeClassifier
@@ -6,7 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import VotingClassifier, RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.preprocessing import OneHotEncoder,LabelEncoder,MinMaxScaler
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.impute import KNNImputer
 from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix, precision_recall_fscore_support, roc_auc_score
 from xgboost import XGBClassifier
@@ -219,7 +220,7 @@ predict_svm = svm.predict(x_test)
 cm = confusion_matrix(predict_svm, y_test)
 _, fp, fn, tp = cm.ravel()
 print("accuracy of support vector machine: {}".format(accuracy_score(predict_svm, y_test)))
-print("precision of support vectir machine: {}".format(tp/(tp + fp)))
+print("precision of support vector machine: {}".format(tp/(tp + fp)))
 print("recall of support vector machine: {}".format(tp/(tp + fn)))
 
 # SHAP
@@ -248,7 +249,7 @@ shap.summary_plot(shap_values_svm, x_train, plot_type="bar")
 plt.show()
 
 # Building a Model: Random Forest
-random = RandomForestClassifier (criterion="entropy", max_depth=4, min_samples_split=50, random_state=1)
+random = RandomForestClassifier (n_estimators=100, min_samples_split=8, min_samples_leaf=8, max_features='sqrt', max_depth=10, criterion='gini', class_weight='balanced_subsample', bootstrap=False)
 random.fit(x_train, y_train)
 
 # calculate accuracy, precision and recall for random forest

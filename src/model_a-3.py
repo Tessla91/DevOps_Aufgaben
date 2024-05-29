@@ -7,18 +7,14 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import VotingClassifier, RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.preprocessing import OneHotEncoder,LabelEncoder,MinMaxScaler
-from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder,MinMaxScaler
+from sklearn.impute import KNNImputer
 from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix, precision_recall_fscore_support, roc_auc_score
 from xgboost import XGBClassifier
 import matplotlib.pyplot as plt
 from ucimlrepo import fetch_ucirepo
 import math
 import tqdm
-from mpl_toolkits.mplot3d import Axes3D
-#import shap
-#from shap import Explainer
-#from shap.plots import beeswarm
 
 # ignore warning messages
 import warnings
@@ -45,16 +41,6 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random
 print('Train set shape: {}'.format(x_train.shape))
 print('Test set shape: {}'.format(x_test.shape))
 
-# Imputing missing values with pandas dataframe
-si = SimpleImputer(strategy='most_frequent')
-x_train = si.fit_transform(x_train)
-x_test = si.transform(x_test)
-
-x_train = pd.DataFrame(x_train,columns=m_shroom.data.features.columns)
-x_test = pd.DataFrame(x_test,columns=m_shroom.data.features.columns)
-
-# no missing target-values
-
 # Rename the column to "target"
 y_train.rename(columns={"poisonous": "target"}, inplace=True)
 y_test.rename(columns={"poisonous": "target"}, inplace=True)
@@ -79,15 +65,23 @@ scaler = MinMaxScaler()
 x_train_scaled = scaler.fit_transform(x_train)
 x_test_scaled = scaler.transform(x_test)
 
-# Convert the numpy arrays to DataFrames
+# Convert the arrays
 x_train_scaled = pd.DataFrame(x_train_scaled, columns=x_train.columns)
 x_test_scaled = pd.DataFrame(x_test_scaled, columns=x_test.columns)
 
 x_train = x_train_scaled
 x_test = x_test_scaled
 
-# Adopting x-values: dropping "odor", "spore-print-color", "gill-size", "gill-spacing", "population"
-to_drop = ["odor", "spore-print-color", "gill-size", "gill-spacing", "population"]
+# Imputing missing values
+kni = KNNImputer ()
+x_train = kni.fit_transform(x_train)
+x_test = kni.transform(x_test)
+
+x_train = pd.DataFrame(x_train,columns=m_shroom.data.features.columns)
+x_test = pd.DataFrame(x_test,columns=m_shroom.data.features.columns)
+
+# dropping "veil-type", "odor", "spore-print-color", "gill-size", "gill-spacing", "population"
+to_drop = ["veil-type", "odor", "spore-print-color", "gill-size", "gill-spacing", "population"]
 x_train.drop(to_drop, axis=1, inplace=True)
 x_test.drop(to_drop, axis=1, inplace=True)
 
@@ -95,6 +89,7 @@ x_test.drop(to_drop, axis=1, inplace=True)
 knn = KNeighborsClassifier(n_neighbors=5)
 knn.fit(x_train, y_train)
 
+# calculate accuracy, precision and recall for kNN
 predict_knn = knn.predict(x_test)
 
 cm = confusion_matrix(predict_knn, y_test)
@@ -105,7 +100,7 @@ print("precision for knn: {}".format(tp/(tp + fp)))
 print("recall for knn: {}".format(tp/(tp + fn)))
 
 # Building a Model: Decision Tree
-dtc = DecisionTreeClassifier(max_depth=4, min_samples_split=50, class_weight = "balanced", random_state=1)
+dtc = DecisionTreeClassifier(splitter="best", min_samples_split=8, min_samples_leaf=2, max_features=None, max_depth=9, criterion="entropy", class_weight = "balanced")
 dtc.fit(x_train, y_train)
 
 # calculate accuracy, precision and recall for dtc
@@ -119,7 +114,7 @@ print("precision for Decision Tree: {}".format(tp/(tp + fp)))
 print("recall for Decision Tree: {}".format(tp/(tp + fn)))
 
 # Building a model: Logistic Regression
-logreg = LogisticRegression(solver='liblinear', penalty='l1', max_iter=100, l1_ratio=0.84, C=719.69)
+logreg = LogisticRegression(solver='lbfgs', penalty='l2', max_iter=200, C=1526.418)
 logreg.fit(x_train, y_train)
 
 # calculate accuracy, precision and recall for logistic regression
@@ -133,7 +128,7 @@ print("precision for Logistic Regression: {}".format(tp/(tp + fp)))
 print("recall for Logistic Regression: {}".format(tp/(tp + fn)))
 
 # Building a model: Support Vector Machine
-svm = SVC(probability=True)
+svm = SVC(probability=True, kernel='rbf', gamma=0.0048, degree=5, coef0=3, class_weight=None, C=10000.0)
 svm.fit(x_train, y_train)
 
 # calculate accuracy, precision and recall for support vector machine
@@ -141,12 +136,12 @@ predict_svm = svm.predict(x_test)
 
 cm = confusion_matrix(predict_svm, y_test)
 _, fp, fn, tp = cm.ravel()
-print("accuracy of Support Vector Machine: {}".format(accuracy_score(predict_svm, y_test)))
-print("precision of Support Vector Machine: {}".format(tp/(tp + fp)))
-print("recall of Support Vector Machine: {}".format(tp/(tp + fn)))
+print("accuracy of support vector machine: {}".format(accuracy_score(predict_svm, y_test)))
+print("precision of support vector machine: {}".format(tp/(tp + fp)))
+print("recall of support vector machine: {}".format(tp/(tp + fn)))
 
 # Building a Model: Random Forest
-random = RandomForestClassifier (criterion="entropy", max_depth=4, min_samples_split=50, random_state=1)
+random = RandomForestClassifier (n_estimators=100, min_samples_split=8, min_samples_leaf=8, max_features='sqrt', max_depth=10, criterion='gini', class_weight='balanced_subsample', bootstrap=False)
 random.fit(x_train, y_train)
 
 # calculate accuracy, precision and recall for random forest
@@ -155,12 +150,12 @@ predict_random = random.predict(x_test)
 cm = confusion_matrix(predict_random, y_test)
 _, fp, fn, tp = cm.ravel()
 
-print("accuracy of Random Forest: {}".format(accuracy_score(predict_random, y_test)))
-print("precision of Random Forest: {}".format(tp/(tp + fp)))
-print("recall of Random Forest: {}".format(tp/(tp + fn)))
+print("accuracy of random forest: {}".format(accuracy_score(predict_random, y_test)))
+print("precision of random forest: {}".format(tp/(tp + fp)))
+print("recall of random forest: {}".format(tp/(tp + fn)))
 
 # Build a Model: XGBoost
-bst = XGBClassifier(subsample=0.6, reg_lambda=0, reg_alpha=0, n_estimators=100, min_child_weight=1, max_depth=6, learning_rate=0.1, gamma=0.1, colsample_bytree=0.6, objective='binary:logistic')
+bst = XGBClassifier(subsample=1.0, reg_lambda=0.1, reg_alpha=0.5, n_estimators=100, min_child_weight=3, max_depth=8, learning_rate=0.05, gamma=0.1, colsample_bytree=0.7)
 bst.fit(x_train, y_train)
 
 # calculate accuracy, precision and recall for XG Boost
@@ -174,7 +169,7 @@ print("precision of XG Boost: {}".format(tp/(tp + fp)))
 print("recall of XG Boost: {}".format(tp/(tp + fn)))
 
 # Building a Model: Bagging-Ensemble
-ensemble = VotingClassifier([("knn",KNeighborsClassifier()),("logreg",LogisticRegression()),("random",RandomForestClassifier(criterion="entropy", max_depth=5, min_samples_split=5, random_state=1))], voting='soft')
+ensemble = VotingClassifier([("knn",KNeighborsClassifier(n_neighbors=5)),("logreg",LogisticRegression(solver='lbfgs', penalty='l2', max_iter=500, C=1526.418)),("random",RandomForestClassifier(n_estimators=100, min_samples_split=8, min_samples_leaf=8, max_features='sqrt', max_depth=10, criterion='gini', class_weight='balanced_subsample', bootstrap=False))], voting='soft')
 ensemble.fit(x_train,y_train)
 
 # calculate accuracy, precision and recall for ensemble
@@ -183,9 +178,9 @@ predict_ensemble= ensemble.predict(x_test)
 cm = confusion_matrix(predict_ensemble, y_test)
 _, fp, fn, tp = cm.ravel()
 
-print("accuracy of Ensemble: {}".format(accuracy_score(predict_ensemble, y_test)))
-print("precision of Ensemble: {}".format(tp/(tp + fp)))
-print("recall of Ensemble: {}".format(tp/(tp + fn)))
+print("accuracy of ensemble: {}".format(accuracy_score(predict_ensemble, y_test)))
+print("precision of ensemble: {}".format(tp/(tp + fp)))
+print("recall of ensemble: {}".format(tp/(tp + fn)))
 
 # Graphing all ROC-Curves in one
 plt.figure(figsize=(8,6))
@@ -204,7 +199,7 @@ plt.plot(fpr2,tpr2,label="ROC-Graph Logistic Regression",c="blue")
 plt.plot(fpr3,tpr3,label="ROC-Graph Decision Tree",c="red")
 plt.plot(fpr4,tpr4,label="ROC-Graph kNN",c="purple")
 plt.plot(fpr5,tpr5,label="ROC-Graph Support Vector Machine",c="orange")
-plt.plot(fpr6,tpr6,label="XG Boost",c="grey")
+plt.plot(fpr6,tpr6,label="ROC-Graph XG Boost",c="grey")
 plt.xlabel("False-Positive Rate (FPR)")
 plt.ylabel("True-Positive Rate (TPR)")
 plt.legend()
