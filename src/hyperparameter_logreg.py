@@ -58,14 +58,14 @@ scaler = MinMaxScaler()
 x_train_scaled = scaler.fit_transform(x_train)
 x_test_scaled = scaler.transform(x_test)
 
-# Convert the numpy arrays to DataFrames
+# Convert the arrays
 x_train_scaled = pd.DataFrame(x_train_scaled, columns=x_train.columns)
 x_test_scaled = pd.DataFrame(x_test_scaled, columns=x_test.columns)
 
 x_train = x_train_scaled
 x_test = x_test_scaled
 
-# Imputing missing values with pandas dataframe
+# Imputing missing values
 kni = KNNImputer ()
 x_train = kni.fit_transform(x_train)
 x_test = kni.transform(x_test)
@@ -83,9 +83,10 @@ param_dist = {
     'penalty': ['l1', 'l2', 'elasticnet', 'None'],
     'C': np.logspace(-4, 4, 50),
     'solver': ['lbfgs', 'saga', 'liblinear', 'newton-cg'],
-    'max_iter': [100, 200, 300],
+    'max_iter': [100, 200, 300, 400, 500],
     'l1_ratio': np.linspace(0, 1, 20)  # Only used if penalty is 'elasticnet'
 }
+
 logreg = LogisticRegression ()
 random_search = RandomizedSearchCV(estimator=logreg, param_distributions=param_dist,scoring='accuracy', n_iter=100, cv=3, verbose=1, n_jobs=-1, random_state=42)
 random_search.fit(x_train_scaled, y_train.values.ravel())
