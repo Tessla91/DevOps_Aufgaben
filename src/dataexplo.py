@@ -24,6 +24,29 @@ print(m_shroom.metadata)
 # variable information
 print(m_shroom.variables)
 
+# Historgram of target
+plt.figure(figsize=(8,6))
+plt.title("histogram TARGET")
+plt.hist(mushroom["poisonous"],bins=2,color="#1ACC94")
+plt.ylabel("frequency of bins")
+plt.xlabel("target (binary)")
+plt.show()
+
+# Historgram "veil-type"
+plt.figure(figsize=(8,6))
+plt.title("histogram veil-type")
+plt.hist(mushroom["veil-type"],bins=2,color="#1ACC94")
+plt.ylabel("frequency of bins")
+plt.xlabel("veil-type")
+plt.show()
+# Historgram of odor
+plt.figure(figsize=(8,6))
+plt.title("histogram odor")
+plt.hist(mushroom["odor"],bins=9,color="#1ACC94")
+plt.ylabel("frequency of bins")
+plt.xlabel("odor")
+plt.show()
+
 # ENCODING
 # Label-Encoding of all values
 label_encoders = {}
@@ -41,23 +64,7 @@ mushroom_scaled = pd.DataFrame(mushroom_scaled, columns=mushroom.columns)
 
 mushroom = mushroom_scaled
 
-# Historgram of target
-plt.figure(figsize=(8,6))
-plt.title("histogram TARGET")
-plt.hist(mushroom["poisonous"],bins=2,color="#1ACC94")
-plt.ylabel("frequency of bins")
-plt.xlabel("target (binary)")
-plt.show()
-
-# Historgram "veil-type"
-plt.figure(figsize=(8,6))
-plt.title("histogram veil-type")
-plt.hist(mushroom["veil-type"],bins=2,color="#1ACC94")
-plt.ylabel("frequency of bins")
-plt.xlabel("veil-type")
-plt.show()
-
-# Adopting values: dropping "veil-type" since it only contains one characteristic
+#Adopting values: dropping "veil-type" since it only contains one characteristic
 to_drop = ["veil-type"]
 mushroom.drop(to_drop, axis=1, inplace=True)
 

@@ -80,8 +80,8 @@ x_test = kni.transform(x_test)
 x_train = pd.DataFrame(x_train,columns=m_shroom.data.features.columns)
 x_test = pd.DataFrame(x_test,columns=m_shroom.data.features.columns)
 
-# dropping "veil-type", "odor"
-to_drop = ["veil-type", "odor"]
+# dropping "veil-type", "odor", "spore-print-color", "gill-size", "gill-spacing", "population"
+to_drop = ["veil-type", "odor", "spore-print-color", "gill-size", "gill-spacing", "population"]
 x_train.drop(to_drop, axis=1, inplace=True)
 x_test.drop(to_drop, axis=1, inplace=True)
 

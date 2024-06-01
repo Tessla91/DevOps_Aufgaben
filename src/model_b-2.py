@@ -7,8 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import VotingClassifier, RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.preprocessing import LabelEncoder,MinMaxScaler
-from sklearn.impute import KNNImputer
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix, precision_recall_fscore_support, roc_auc_score
 from xgboost import XGBClassifier
 import matplotlib.pyplot as plt
@@ -41,6 +40,8 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random
 print('Train set shape: {}'.format(x_train.shape))
 print('Test set shape: {}'.format(x_test.shape))
 
+# no imputing necessary since "odor" and "poisonous" have no missing values
+
 # Rename the column to "target"
 y_train.rename(columns={"poisonous": "target"}, inplace=True)
 y_test.rename(columns={"poisonous": "target"}, inplace=True)
@@ -49,41 +50,23 @@ y_test.rename(columns={"poisonous": "target"}, inplace=True)
 y_train['target'] = y_train['target'].map({'p': 1, 'e': 0})
 y_test['target'] = y_test['target'].map({'p': 1, 'e': 0})
 
-# Label-Encoding of x-values
-label_encoders = {}
-for column in x_train.columns:
-    encoder = LabelEncoder()
-    x_train[column] = encoder.fit_transform(x_train[column])
-    x_test[column] = encoder.transform(x_test[column])
+# Encoding of x-values
+encoder = OneHotEncoder(drop="first")
+encoder.fit(x_train)
+x_encoded = encoder.transform(x_train)
+x_train = pd.DataFrame(x_encoded.todense(),columns=encoder.get_feature_names_out())
 
-    # Store the encoder to handle new data or inverse transformation if needed
-    label_encoders[column] = encoder
+encoder.fit(x_test)
+x_encoded2 = encoder.transform(x_test)
+x_test = pd.DataFrame(x_encoded2.todense(),columns=encoder.get_feature_names_out())
 
-# Normalizing x-values
-scaler = MinMaxScaler()
+# Normalizing x- and y-values: not necessary
 
-x_train_scaled = scaler.fit_transform(x_train)
-x_test_scaled = scaler.transform(x_test)
+# dropping all but "odor_f"
+x_train = x_train[['odor_f']]
+x_test = x_test[['odor_f']]
 
-# Convert the arrays
-x_train_scaled = pd.DataFrame(x_train_scaled, columns=x_train.columns)
-x_test_scaled = pd.DataFrame(x_test_scaled, columns=x_test.columns)
-
-x_train = x_train_scaled
-x_test = x_test_scaled
-
-# Imputing missing values
-kni = KNNImputer ()
-x_train = kni.fit_transform(x_train)
-x_test = kni.transform(x_test)
-
-x_train = pd.DataFrame(x_train,columns=m_shroom.data.features.columns)
-x_test = pd.DataFrame(x_test,columns=m_shroom.data.features.columns)
-
-# dropping "veil-type", "cap-shape", "cap-surface", "cap-color", "bruises", "gill-attachment", "gill-color", "stalk-shape", "stalk-root", "stalk-surface-above-ring", "stalk-surface-below-ring", "stalk-color-above-ring", "stalk-color-below-ring", "veil-color", "ring-number", "ring-type", "habitat", "spore-print-color", "gill-size", "gill-spacing", "population"
-to_drop = ["veil-type", "cap-shape", "cap-surface", "cap-color", "bruises", "gill-attachment", "gill-color", "stalk-shape", "stalk-root", "stalk-surface-above-ring", "stalk-surface-below-ring", "stalk-color-above-ring", "stalk-color-below-ring", "veil-color", "ring-number", "ring-type", "habitat", "spore-print-color", "gill-size", "gill-spacing", "population"]
-x_train.drop(to_drop, axis=1, inplace=True)
-x_test.drop(to_drop, axis=1, inplace=True)
+print (x_train)
 
 # Building a Model: KNeirestneighbors
 knn = KNeighborsClassifier(n_neighbors=5)
