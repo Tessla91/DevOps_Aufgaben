@@ -12,3 +12,4 @@ ucimlrepo
 tqdm
 shap==0.45.1
 xgboost== 2.0.3
+openpyxl==3.0.10
