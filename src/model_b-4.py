@@ -62,9 +62,9 @@ x_test = pd.DataFrame(x_encoded2.todense(),columns=encoder.get_feature_names_out
 
 # Normalizing x- and y-values: not necessary
 
-# dropping all but "odor_c"
-x_train = x_train[['odor_c']]
-x_test = x_test[['odor_c']]
+# dropping all but "odor_m"
+x_train = x_train[['odor_m']]
+x_test = x_test[['odor_m']]
 
 print (x_train)
 

@@ -1,88 +1,85 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn import tree, metrics
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from xgboost import XGBClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import VotingClassifier, RandomForestClassifier
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler
-from sklearn.impute import KNNImputer
-from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
+from sklearn.svm import SVC
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix, precision_recall_fscore_support, roc_auc_score
+from xgboost import XGBClassifier
+import matplotlib.pyplot as plt
 from ucimlrepo import fetch_ucirepo
-import warnings
+import math
+import tqdm
 
-# Ignore warning messages
+# ignore warning messages
+import warnings
 warnings.filterwarnings("ignore")
 
-# Fetch dataset
+# fetch dataset
 m_shroom = fetch_ucirepo(id=73)
 
-# Data (as pandas dataframes)
+# data (as pandas dataframes)
 x = m_shroom.data.features
 y = m_shroom.data.targets
 
 mushroom = pd.concat([x, y], axis=1)
 
-# Metadata
+# metadata
 print(m_shroom.metadata)
 
-# Variable information
+# variable information
 print(m_shroom.variables)
 
-# Encoding categorical variables
-label_encoders = {}
-for column in mushroom.columns:
-    if mushroom[column].dtype == 'object':
-        encoder = LabelEncoder()
-        mushroom[column] = encoder.fit_transform(mushroom[column])
-        label_encoders[column] = encoder
-
 # Split data for testing and training
-x_train, x_test, y_train, y_test = train_test_split(mushroom.drop(columns='poisonous'), mushroom['poisonous'], test_size=0.33, random_state=None)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=None)
 
 print('Train set shape: {}'.format(x_train.shape))
 print('Test set shape: {}'.format(x_test.shape))
 
-# Dropping "veil-type"
-to_drop = ["veil-type"]
-x_train.drop(to_drop, axis=1, inplace=True)
-x_test.drop(to_drop, axis=1, inplace=True)
+# no imputing necessary since "odor" and "poisonous" have no missing values
 
-# Normalizing x-values
-scaler = MinMaxScaler()
-x_train_scaled = scaler.fit_transform(x_train)
-x_test_scaled = scaler.transform(x_test)
+# Rename the column to "target"
+y_train.rename(columns={"poisonous": "target"}, inplace=True)
+y_test.rename(columns={"poisonous": "target"}, inplace=True)
 
-# Convert the arrays to DataFrames
-x_train_scaled = pd.DataFrame(x_train_scaled, columns=x_train.columns)
-x_test_scaled = pd.DataFrame(x_test_scaled, columns=x_test.columns)
-x_train = x_train_scaled
-x_test = x_test_scaled
+# Encoding of the target
+y_train['target'] = y_train['target'].map({'p': 1, 'e': 0})
+y_test['target'] = y_test['target'].map({'p': 1, 'e': 0})
 
-# Imputing missing values
-kni = KNNImputer()
-x_train = kni.fit_transform(x_train)
-x_test = kni.transform(x_test)
+# dropping all but "odor"
+x_train = x_train[['odor']]
+x_test = x_test[['odor']]
 
-x_train = pd.DataFrame(x_train, columns=x_train_scaled.columns)
-x_test = pd.DataFrame(x_test, columns=x_test_scaled.columns)
+# Encoding of x-values
+encoder = OneHotEncoder(drop="first")
+encoder.fit(x_train)
+x_encoded = encoder.transform(x_train)
+x_train = pd.DataFrame(x_encoded.todense(),columns=encoder.get_feature_names_out())
+
+encoder.fit(x_test)
+x_encoded2 = encoder.transform(x_test)
+x_test = pd.DataFrame(x_encoded2.todense(),columns=encoder.get_feature_names_out())
+
+# Normalizing x- and y-values: not necessary
 
 # Define feature sets for the four models using the training data
 feature_sets = {
-    'model_a-1': x_train.drop(columns=['odor']),
-    'model_a-2': x_train.drop(columns=['odor', 'spore-print-color', 'gill-size', 'gill-spacing', 'population']),
-    'model_a-3': x_train[['odor', 'spore-print-color', 'gill-size', 'gill-spacing', 'population']],
-    'model_a-4': x_train[['odor']]
+    'model_b-1': x_train[['odor_n']],
+    'model_b-2': x_train[['odor_f']],
+    'model_b-3': x_train[['odor_c']],
+    'model_b-4': x_train[['odor_m']]
 }
 
 # Define corresponding test feature sets
 test_feature_sets = {
-    'model_a-1': x_test.drop(columns=['odor']),
-    'model_a-2': x_test.drop(columns=['odor', 'spore-print-color', 'gill-size', 'gill-spacing', 'population']),
-    'model_a-3': x_test[['odor', 'spore-print-color', 'gill-size', 'gill-spacing', 'population']],
-    'model_a-4': x_test[['odor']]
+    'model_b-1': x_test[['odor_n']],
+    'model_b-2': x_test[['odor_f']],
+    'model_b-3': x_test[['odor_c']],
+    'model_b-4': x_test[['odor_m']]
 }
 
 # Define classifiers
@@ -126,6 +123,6 @@ for model_name, train_features in feature_sets.items():
 results_df = pd.DataFrame(results)
 
 # Save to Excel
-results_df.to_excel('/Users/Pudzich/Documents/GitHub/Projektarbeit_ML-2024/data/mushroom_results.xlsx', index=False)
+results_df.to_excel('/Users/Pudzich/Documents/GitHub/Projektarbeit_ML-2024/data/results_odor.xlsx', index=False)
 
-print("Results saved to mushroom_results.xlsx")
+print("Results saved to results_odor.xlsx")
