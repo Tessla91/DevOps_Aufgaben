@@ -8,7 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import VotingClassifier, RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.metrics import mean_squared_error, accuracy_score, confusion_matrix, precision_recall_fscore_support, roc_auc_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
 from xgboost import XGBClassifier
 import matplotlib.pyplot as plt
 from ucimlrepo import fetch_ucirepo
