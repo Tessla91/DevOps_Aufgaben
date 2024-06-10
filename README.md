@@ -1,16 +1,12 @@
-# python-template
+This repository includes all steps of analyzing the mushroom-dataset of 1987 using modern machine learning techniques. Most of the data exploration, model training and fitting is done in python files. However, there are two Jupyter notebooks included in this repository. They both contain no other code then the one used in the files.
 
-Precondition:
-Windows users can follow the official microsoft tutorial to install python, git and vscode here:
+# Installing Python
 
-- ​​https://docs.microsoft.com/en-us/windows/python/beginners
-- german: https://docs.microsoft.com/de-de/windows/python/beginners
+For this repository, python code was used in all steps. Please install python software on your device or the virtual environment (see below) to run this repository.
 
 ## Visual Studio Code
 
-This repository is optimized for [Visual Studio Code](https://code.visualstudio.com/) which is a great code editor for many languages like Python and Javascript. The [introduction videos](https://code.visualstudio.com/docs/getstarted/introvideos) explain how to work with VS Code. The [Python tutorial](https://code.visualstudio.com/docs/python/python-tutorial) provides an introduction about common topics like code editing, linting, debugging and testing in Python. There is also a section about [Python virtual environments](https://code.visualstudio.com/docs/python/environments) which you will need in development. There is also a [Data Science](https://code.visualstudio.com/docs/datascience/overview) section showing how to work with Jupyter Notebooks and common Machine Learning libraries.
-
-The `.vscode` directory contains configurations for useful extensions like [GitLens](https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens0) and [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python). When opening the repository, VS Code will open a prompt to install the recommended extensions.
+This repository is optimized for [Visual Studio Code](https://code.visualstudio.com/) which is a great code editor for many languages like Python and Javascript. The [introduction videos](https://code.visualstudio.com/docs/getstarted/introvideos) explain how to work with VS Code.
 
 ## Development Setup
 

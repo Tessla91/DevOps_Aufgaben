@@ -39,6 +39,7 @@ plt.hist(mushroom["veil-type"],bins=2,color="#1ACC94")
 plt.ylabel("frequency of bins")
 plt.xlabel("veil-type")
 plt.show()
+
 # Historgram of odor
 plt.figure(figsize=(8,6))
 plt.title("histogram odor")
